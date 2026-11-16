@@ -14,6 +14,8 @@ include(FetchContent)
 
 # The rows of src/blessed.txt, each "import|package|source|ref".
 function(goose_blessed_rows outvar)
+    # Changes to the package pins must reconfigure even on an incremental build.
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/src/blessed.txt")
     file(STRINGS "${CMAKE_SOURCE_DIR}/src/blessed.txt" lines)
     set(rows)
     foreach(line IN LISTS lines)
@@ -118,8 +120,9 @@ function(goose_builtin_package pkgname source ref)
                 set(url "https://${source}")
             endif()
         endif()
+        # CMake does not allow commit hashes as GIT_TAG with GIT_SHALLOW.
         FetchContent_Declare(goose_pkg_${pkgname}
-            GIT_REPOSITORY "${url}" GIT_TAG "${ref}" GIT_SHALLOW TRUE GIT_SUBMODULES_RECURSE TRUE
+            GIT_REPOSITORY "${url}" GIT_TAG "${ref}" GIT_SUBMODULES_RECURSE TRUE
             SOURCE_DIR "${CMAKE_BINARY_DIR}/pkg/src/${pkgname}/${ref}")
         FetchContent_GetProperties(goose_pkg_${pkgname})
         if(NOT goose_pkg_${pkgname}_POPULATED)
